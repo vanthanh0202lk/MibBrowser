@@ -17,10 +17,10 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.swing.*;
 
 import net.percederberg.mibble.snmp.SnmpObjectType;
+
 
 /**
  * The Mib Walk operations panel.
@@ -287,13 +287,13 @@ public class MibWalkPanel extends JPanel {
             try {
                 preLineValue = line.substring(0, line.indexOf("="));
             } catch (IndexOutOfBoundsException ine) {
-                appendResults("#Error preLineValue:" + linevalue + "\n");
+                appendResults("#Error preLineValue:" + linevalue + " ");
                 appendResults("#ErrorCode:" + ine.toString() + "\n");
             }
             try {
                 suffix = line.substring(line.indexOf("="), line.length());
             } catch (IndexOutOfBoundsException ine) {
-                appendResults("#Error suffixline:" + linevalue + "\n");
+                appendResults("#Error suffixline:" + linevalue + " ");
                 appendResults("#ErrorCode:" + ine.toString() + "\n");
             }
             String oidName = null;
@@ -313,7 +313,7 @@ public class MibWalkPanel extends JPanel {
                 try {
                     mibName = line.substring(cursor, line.indexOf("::"));
                 } catch (IndexOutOfBoundsException ine) {
-                    appendResults("#Error mibName:" + line + "\n");
+                    appendResults("#Error mibName:" + line + " ");
                     appendResults("#ErrorCode:" + ine.toString() + "\n");
                 }
                 cursor += mibName.length() + 2;
@@ -321,15 +321,14 @@ public class MibWalkPanel extends JPanel {
                     try {
                         oidName = line.substring(cursor, line.indexOf("."));
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error oidName:" + line + "\n");
+                        appendResults("#Error oidName:" + line + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
-                    cursor += oidName.length()+1;
+                    cursor += oidName.length() + 1;
                     try {
                         strIndex = line.substring(cursor, line.indexOf("="));
-
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error strIndex:" + line + "\n");
+                        appendResults("#Error strIndex:" + line + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     cursor += strIndex.length() + 1;
@@ -337,7 +336,7 @@ public class MibWalkPanel extends JPanel {
                     try {
                         oidName = line.substring(cursor, line.indexOf("="));
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error oidName:" + line + "\n");
+                        appendResults("#Error oidName:" + line + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     cursor += oidName.length() + 1;
@@ -349,7 +348,7 @@ public class MibWalkPanel extends JPanel {
                     if (suffix.contains(":"))
                         objectType = line.substring(cursor, line.indexOf(": ")).trim();
                 } catch (IndexOutOfBoundsException ine) {
-                    appendResults("#Error objectType:" + line + "\n");
+                    appendResults("#Error objectType:" + line + " ");
                     appendResults("#ErrorCode:" + ine.toString() + "\n");
                 }
                 cursor += objectType.length() + 2;
@@ -359,23 +358,27 @@ public class MibWalkPanel extends JPanel {
                     try {
                         subLine = line.substring(cursor, strLen);
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error OID subLine:" + line + "\n");
+                        appendResults("#Error OID subLine:" + line + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     cursor = 0;
                     String mibName2 = null;
                     try {
-                        mibName2 = subLine.substring(cursor, subLine.indexOf("::")).trim();
+                        if (subLine.contains("::"))
+                            mibName2 = subLine.substring(cursor, subLine.indexOf("::")).trim();
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error OID mibName2:" + subLine + "\n");
+                        appendResults("#Error OID mibName2:" + subLine + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     cursor += mibName2.length() + 3;
                     String oiName2 = null;
                     try {
-                        oiName2 = subLine.substring(cursor, subLine.length());
+                        if (subLine.contains("."))
+                            oiName2 = subLine.substring(cursor, subLine.indexOf("."));
+                        else
+                            oiName2 = subLine.substring(cursor, subLine.length());
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error OID oiName2:" + subLine + "\n");
+                        appendResults("#Error OID oiName2:" + subLine + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     String oiId2 = listMibOid.get(oiName2.trim());
@@ -383,13 +386,26 @@ public class MibWalkPanel extends JPanel {
                         oiId2 = "Not found sub Mib Name: " + mibName2 + " with oidName2: " + oiName2;
                         isSubOidNotFound = true;
                     }
-                    data = oiId2;
+                    cursor = cursor + oiName2.length() + 1;
+                    String strIndex2 = "";
+                    if (cursor < subLine.length()) {
+                        strIndex2 = subLine.substring(cursor, subLine.length());
+                        //parse ip v6
+                        strIndex2 = parserIPv6(strIndex2);
+                        strIndex2 = strIndex2.replaceAll("ipv4", "1");
+                        strIndex2 = strIndex2.replaceAll("ipv6", "2");
+                        strIndex2 = strIndex2.replaceAll("('|\")", "");
+                    }
+                    if (!strIndex2.isEmpty())
+                        data = oiId2 + "." + strIndex2;
+                    else
+                        data = oiId2;
                 } else if (objectType.equalsIgnoreCase("Timeticks")) {
                     String subLine = null;
                     try {
                         subLine = line.substring(cursor, strLen);
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error Timeticks subLine:" + subLine + "\n");
+                        appendResults("#Error Timeticks subLine:" + subLine + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     String value = null;
@@ -399,7 +415,7 @@ public class MibWalkPanel extends JPanel {
                         else
                             value = subLine;
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error Timeticks value subLine:" + subLine + "\n");
+                        appendResults("#Error Timeticks value subLine:" + subLine + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     cursor += value.length() + 2;
@@ -409,7 +425,7 @@ public class MibWalkPanel extends JPanel {
                     try {
                         subLine = line.substring(cursor, strLen);
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error INTEGER subLine:" + subLine + "\n");
+                        appendResults("#Error INTEGER subLine:" + subLine + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     String value = null;
@@ -419,12 +435,11 @@ public class MibWalkPanel extends JPanel {
                         else
                             value = subLine;
                     } catch (IndexOutOfBoundsException ine) {
-                        appendResults("#Error INTEGER value:" + subLine + "\n");
+                        appendResults("#Error INTEGER value:" + subLine + " ");
                         appendResults("#ErrorCode:" + ine.toString() + "\n");
                     }
                     cursor += value.length() + 2;
-                    data = value.replaceAll("[^\\d.]", "");
-                    ;
+                    data = value.replaceAll("[A-Za-z]", "");
                 } else if (objectType.equalsIgnoreCase("Gauge32") ||
                         objectType.equalsIgnoreCase("Gauge64") ||
                         objectType.equalsIgnoreCase("Counter32") ||
@@ -447,62 +462,68 @@ public class MibWalkPanel extends JPanel {
                     if (isSubOidNotFound)
                         value = "#" + oiId + "." + strIndex + " , " + objectType + " , " + data + "\n";
                     else {
-                        strIndex = strIndex.replaceAll("ipv4","1");
-                        strIndex = strIndex.replaceAll("ipv6","2");
+
+                        //parse ip v6
+                        strIndex = parserIPv6(strIndex);
+                        strIndex = strIndex.replaceAll("ipv4", "1");
+                        strIndex = strIndex.replaceAll("ipv6", "2");
                         strIndex = strIndex.replaceAll("('|\")", "");
-                        String oidAndIndex = oiId + "." + strIndex ;
+                        String oidAndIndex = oiId + "." + strIndex;
 
                         int loop = 0;
-                        if(oidAndIndex.length() <31){
+                        if (oidAndIndex.length() < 31) {
                             loop = 31 - oidAndIndex.length();
-                            for (int i = 0 ; i < loop; i++){
-                                oidAndIndex +=" ";
+                            for (int i = 0; i < loop; i++) {
+                                oidAndIndex += " ";
                             }
                         }
-                        if(objectType.length() <13){
+                        if (objectType.length() < 13) {
                             loop = 13 - objectType.length();
-                            for (int i = 0 ; i < loop; i++){
-                                objectType +=" ";
+                            for (int i = 0; i < loop; i++) {
+                                objectType += " ";
                             }
                         }
                         data = data.replaceAll("('|\")", "");
-                        value =  oidAndIndex+", " + objectType + ", " + data + "\n";
+                        if(!data.isEmpty())
+                            value = oidAndIndex + ", " + objectType + ", " + data + "\n";
+                        else
+                            value = "#"+oidAndIndex + ", " + objectType + ", " + data + "\n";
                     }
                 } else {
                     if (suffix.contains(":")) {//have data
                         int loop = 0;
-                        if(oiId.length() <31){
+                        if (oiId.length() < 31) {
                             loop = 31 - oiId.length();
-                            for (int i = 0 ; i < loop; i++){
-                                oiId +=" ";
+                            for (int i = 0; i < loop; i++) {
+                                oiId += " ";
                             }
                         }
-                        if(objectType.length() <13){
+                        if (objectType.length() < 13) {
                             loop = 13 - objectType.length();
-                            for (int i = 0 ; i < loop; i++){
-                                objectType +=" ";
+                            for (int i = 0; i < loop; i++) {
+                                objectType += " ";
                             }
                         }
                         data = data.replaceAll("('|\")", "");
                         value = oiId + ", " + objectType + ", " + data + "\n";
                     } else {
                         int loop = 0;
-                        if(oiId.length() <31){
+                        if (oiId.length() < 31) {
                             loop = 31 - oiId.length();
-                            for (int i = 0 ; i < loop; i++){
-                                oiId +=" ";
+                            for (int i = 0; i < loop; i++) {
+                                oiId += " ";
                             }
                         }
                         value = "#" + oiId + ", " + data + "\n";//have not data
                     }
                 }
-                if (value.contains("ipv4") || value.contains("ipv6") || value.contains("_snmpd") ||
-                        value.contains("snmpd.conf")|| value.contains("Not found Mib Name") )
+                if ( value.contains("_snmpd") ||
+                        value.contains("snmpd.conf") || value.contains("Not found Mib Name"))
                     appendResults("#" + value);
                 else
                     appendResults(value);
             } catch (Exception e) {
-                appendResults("#Error:" + linevalue + "\n");
+                appendResults("#Error:" + linevalue + " ");
                 appendResults("#ErrorCode:" + e.toString() + "\n");
             }
         }
@@ -676,7 +697,7 @@ public class MibWalkPanel extends JPanel {
             case "IpAddress":
                 return "IpAddress";
             case "ipv4":
-                    return "1";
+                return "1";
             case "ipv6":
                 return "2";
             default:
@@ -704,6 +725,64 @@ public class MibWalkPanel extends JPanel {
             appendResults("linno: " + linno + " " + entry.getKey() + " - " + entry.getValue() + "\n");
         }
 
+    }
+
+    protected String parserIPv6(String strIndex) {
+        String srcIpv6 = "";
+        String desIpv6 = "";
+        String strIndexTail = "";
+        //appendResults("++strIndex: " + strIndex + "\n");
+        int subCursor = 0;
+        if (strIndex.contains("ipv6.\"")) {
+            subCursor = strIndex.indexOf("ipv6.\"") + 6;
+            if (strIndex.contains("\"."))
+                srcIpv6 = strIndex.substring(subCursor, strIndex.indexOf("\"."));
+            else {
+                srcIpv6 = strIndex.substring(subCursor, strIndex.indexOf("\" "));
+            }
+            subCursor += srcIpv6.length()+2;
+            strIndexTail = strIndex.substring(subCursor, strIndex.length());
+        }
+
+        if (!strIndexTail.isEmpty() && strIndexTail.contains("ipv6.\"")) {
+            subCursor = strIndexTail.indexOf("ipv6.\"") + 6;
+            //appendResults("ipv6 strIndexTail: "+strIndexTail+" length: "+strIndexTail.length()
+            //        +"subCursor:"+subCursor+"\n");
+            if (strIndexTail.contains("\".")) {
+             //   appendResults("desIpv6_1: "+strIndexTail.indexOf("\".")+"\n");
+                desIpv6 = strIndexTail.substring(subCursor, strIndexTail.indexOf("\"."));
+             //   appendResults("desIpv6_2: "+desIpv6+"\n");
+            }
+            else {
+              //  appendResults("desIpv6_3: "+desIpv6+"\n");
+                desIpv6 = strIndexTail.substring(subCursor, strIndexTail.indexOf("\" ")).trim();
+              //  appendResults("desIpv6_4: "+desIpv6+"\n");
+            }
+        }
+        if (!srcIpv6.isEmpty()) {
+            String[] srcIpv6Array = srcIpv6.split(":");
+            String srcIpv6Cv = "";
+            for(int i = 0; i< srcIpv6Array.length; i++){
+                if (i<srcIpv6Array.length-1)
+                    srcIpv6Cv += Integer.parseInt(srcIpv6Array[i], 16) + ".";
+                else
+                    srcIpv6Cv += Integer.parseInt(srcIpv6Array[i], 16);
+
+            }
+            strIndex = strIndex.replaceAll(srcIpv6.trim(), srcIpv6Cv.trim());
+        }
+        if (!desIpv6.isEmpty()) {
+            String[] desIpv6Array = desIpv6.split(":");
+            String desIpv6Cv = "";
+            for(int i = 0; i< desIpv6Array.length; i++){
+                if (i<desIpv6Array.length-1)
+                    desIpv6Cv += Integer.parseInt(desIpv6Array[i], 16) + ".";
+                else
+                    desIpv6Cv += Integer.parseInt(desIpv6Array[i], 16);
+            }
+            strIndex = strIndex.replaceAll(desIpv6.trim(), desIpv6Cv.trim());
+        }
+        return strIndex;
     }
 
 
