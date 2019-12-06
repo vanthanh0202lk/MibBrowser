@@ -8,8 +8,11 @@
 
 package net.percederberg.mibble;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
@@ -63,6 +66,8 @@ public class MibbleBrowser {
      * The MIB loader to use.
      */
     public MibLoader loader = new MibLoader();
+
+    public static String lastDir = System.getProperty("user.dir", ".");
 
     /**
      * The application main entry point.
@@ -124,12 +129,23 @@ public class MibbleBrowser {
         if (list.size() > 0) {
             frame.loadMibsAsync(list.toArray(new String[list.size()]));
         } else {
-            frame.loadMibsAsync(new String[] {
-                "SNMPv2-SMI",
-                "SNMPv2-TC",
-                "SNMPv2-MIB",
-                "HOST-RESOURCES-MIB"
-            });
+            list.add("SNMPv2-SMI");
+            list.add("SNMPv2-TC");
+            list.add("SNMPv2-MIB");
+            list.add("HOST-RESOURCES-MIB");
+            list.add("IF-MIB");
+
+            FileDialog dialog = new FileDialog(frame, "Select MIB File");
+            dialog.setMultipleMode(true);
+            dialog.setVisible(true);
+            dialog.setDirectory(lastDir);
+            File files[] = dialog.getFiles();
+            for (File file : files) {
+                System.out.println("File: " + file.getName());
+                list.add(file.getName());
+
+            }
+            frame.loadMibsAsync(list.toArray(new String[list.size()]));
         }
     }
 

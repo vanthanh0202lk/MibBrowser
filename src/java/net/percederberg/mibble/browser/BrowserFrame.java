@@ -386,6 +386,7 @@ public class BrowserFrame extends JFrame {
         loadMibsAsync(dialog.mibs);
     }
 
+    private HashMap<MibSymbol,MibTreeNode> nodes = new HashMap<>();
     /**
      * Loads a MIB file from a specified source.
      *
@@ -393,10 +394,12 @@ public class BrowserFrame extends JFrame {
      * @return true if the MIB loaded successfully, or
      * false otherwise
      */
-    private HashMap<MibSymbol,MibTreeNode> nodes = new HashMap<>();
+
     protected boolean loadMib(String src) {
         String message = null;
-        setStatus("Loading " + src + "...");
+
+        setStatus("Loading: " + src + "...");
+
         try {
             for (Mib mib : browser.loadMib(src)) {
                 if (mibTree.getRootNode().findChildByValue(mib) == null) {
@@ -410,24 +413,34 @@ public class BrowserFrame extends JFrame {
                         if (symbol instanceof MibValueSymbol) {
                             MibValueSymbol value = (MibValueSymbol) symbol;
                             listMibOid.put(value.getName().trim(),value.getOid().toString());
-
+                            descriptionArea.append("File Name: "+src+" ,Object Name: "+value.getName().trim()+" ,Oid: "+value.getOid().toString()+"\n");
+                            descriptionArea.setCaretPosition(descriptionArea.getText().length());
                         }else if (symbol instanceof MibTypeSymbol) {
                             MibTreeNode node = new MibTreeNode(symbol.getName(), symbol);
                             typesNode.add(node);
                             nodes.put(symbol, node);
                             //thanh
                             MibValueSymbol symbolvalue = (node != null) ? node.getValueSymbol() : null;
-                            if (symbolvalue!=null)
-                                listMibOid.put(symbol.getName().trim(),symbolvalue.getOid().toString());
+                            if (symbolvalue!=null) {
+                                listMibOid.put(symbol.getName().trim(), symbolvalue.getOid().toString());
+                                descriptionArea.append("File Name: "+src+" ,Object Name: "+ symbol.getName().trim() + " ,Oid: " + symbolvalue.getOid().toString() + "\n");
+                                descriptionArea.setCaretPosition(descriptionArea.getText().length());
+                            }
                         }
                     }
+                }else {
+                    descriptionArea.append("File Name: findChildByValue is null \n");
+                    descriptionArea.setCaretPosition(descriptionArea.getText().length());
+
                 }
             }
             mibWalkPanel.setListMibOid(listMibOid);
         } catch (FileNotFoundException e) {
             message = "Failed to load " + e.getMessage();
+            descriptionArea.append(message+"\n");
         } catch (IOException e) {
             message = "Failed to load " + src + ": " + e.getMessage();
+            descriptionArea.append(message+"\n");
         } catch (MibLoaderException e) {
             message = "Failed to load " + src;
             ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -647,8 +660,12 @@ public class BrowserFrame extends JFrame {
         public void run() {
             boolean success = true;
             setBlocked(true);
-            for (int i = 0; i < mibs.length; i++) {
-                success = success && loadMib(mibs[i]);
+            try {
+                for (int i = 0; i < mibs.length; i++) {
+                    success = success && loadMib(mibs[i]);
+                }
+            }catch (Exception e){
+                descriptionArea.append(e+"\n");
             }
             refreshTree(success);
             setBlocked(false);
